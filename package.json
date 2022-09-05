@@ -16,5 +16,8 @@
   "bugs": {
     "url": "https://github.com/sb242/tinyapp/issues"
   },
-  "homepage": "https://github.com/sb242/tinyapp#readme"
+  "homepage": "https://github.com/sb242/tinyapp#readme",
+  "dependencies": {
+    "express": "^4.18.1"
+  }
 }
