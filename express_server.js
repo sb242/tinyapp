@@ -7,7 +7,7 @@ app.set("view engine", "ejs");
 app.use(express.urlencoded({ extended: true })); //middleware used for translating sent data into readable code, from a buffer(not human readable) to string
 
 generateRandomString = () => {
-  const randomString = (Math.random() + 1).toString(36).substring(7);
+  const randomString = (Math.random() + 1).toString(36).substring(6);
   return randomString;
 }
 
@@ -40,8 +40,15 @@ app.get("/urls/:id", (req, res) => {
 
 app.post("/urls", (req, res) => {
   console.log(req.body); // Log the POST request body to the console
-  res.send("Ok"); // Respond with 'Ok' (we will replace this)
+  const randomString = generateRandomString();
+  urlDatabase[randomString] = req.body.longURL;
+  res.redirect(`/urls/${randomString}`); // Respond with 'Ok' (we will replace this)
 });
+
+app.get("/u/:id", (req, res) => {
+  longURL = urlDatabase[req.params.id];
+  res.redirect(longURL);
+})
 
 app.get("/hello", (req, res) => {
   res.send("<html><body>Hello <b>World</b></body></html>\n");
