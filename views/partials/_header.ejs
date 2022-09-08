@@ -16,21 +16,17 @@
       <div class="navbar-nav">
         <a class="nav-item nav-link" href="/urls">My URLs</a>
         <a class="nav-item nav-link" href="/urls/new">Create New URL</a>
-        <% if(username) { %>
+        <a class="nav-item nav-link" href="/register">Register</a>
+        <% if(users[user]) { %>
           <form action="/logout" method="POST">
             <ul class="nav justify-content-end">
-              <a class="nav-item nav-link disabled font-weight-bold text-warning">Logged in as: <%= username %></a>
+              <a class="nav-item nav-link disabled font-weight-bold text-warning">Logged in as: <%= users[user].email %></a>
               <button class="btn btn-primary" type="submit">Logout</button>
             </ul>
           </form>
         <% } else { %>
-          <form action="/login" method="POST">
-            <div class="input-group mb-3">
-              <input name = "username" type="text" class="form-control" placeholder="Username" aria-label="Recipient's username" aria-describedby="basic-addon2">
-              <div class="input-group-append">
+          <form action="/login" method="GET">
                 <button class="btn btn-primary" type="submit">Login</button>
-              </div>
-            </div>
           </form>
         <% } %>
       </div>
