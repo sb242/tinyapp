@@ -20,7 +20,7 @@
       <div class="card-body">
         <h5 class="card-title">TinyURL for: <%= longURL %></h5>
         <p class="card-text">
-          Short URL ID: <a href="/u/<%= id %>"><%= id %></a>
+          Short URL ID: <a><%= id %></a>
           <form action="/urls/<%= id %>" method="POST">
             <div class="input-group mb-3">
               <input name = "newURLName" type="text" class="form-control" placeholder="<%= longURL %>" aria-label="Recipient's username" aria-describedby="basic-addon2">
