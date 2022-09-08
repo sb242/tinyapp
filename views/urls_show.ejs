@@ -10,7 +10,6 @@
     />
     <title>URL - TinyApp Example</title>
   </head>
-
   <body>
     <!-- <header> -->
       <%- include('partials/_header') %>
@@ -23,7 +22,7 @@
           Short URL ID: <a><%= id %></a>
           <form action="/urls/<%= id %>" method="POST">
             <div class="input-group mb-3">
-              <input name = "newURLName" type="text" class="form-control" placeholder="<%= longURL %>" aria-label="Recipient's username" aria-describedby="basic-addon2">
+              <input name = "newURLName" type="text" class="form-control" value="<%= longURL %>" aria-label="Recipient's username" aria-describedby="basic-addon2">
               <div class="input-group-append">
                 <button class="btn btn-outline-secondary" type="submit">Edit URL</button>
               </div>

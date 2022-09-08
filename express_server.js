@@ -9,7 +9,7 @@ const app = express();
 const PORT = 8080; // default port 8080
 app.set("view engine", "ejs"); //set view engine
 
-//Middleware
+//middleware
 app.use(morgan('dev'));
 app.use(cookieSession({
   name: 'session',
@@ -67,15 +67,14 @@ app.get("/urls/new", (req, res) => {
 app.get("/urls/:id", (req, res) => {
   const id = req.params.id;
   const userID = req.session.userID;
-  const longURL = urlDatabase[id].longURL;
   
-  if (!userID) {
-    res.redirect("/login");
-    return;
-  }
-
   if (!urlDatabase[id]) {
     res.send("URL does not exist");
+    return;
+  }
+  
+  if (!userID) {
+    res.send("You are not logged in.");
     return;
   }
 
@@ -84,19 +83,20 @@ app.get("/urls/:id", (req, res) => {
     return;
   }
 
+  const longURL = urlDatabase[id].longURL;
   const templateVars = { id, longURL, users, userID };
   res.render("urls_show", templateVars);
 });
 
 app.get("/u/:id", (req, res) => {
   const id = req.params.id;
-  const longURL = urlDatabase[id].longURL;
 
-  if (!longURL) {
+  if (!urlDatabase[id]) {
     res.send("The tinyapp id you're lookin for does not exist");
     return;
   }
 
+  const longURL = urlDatabase[id].longURL;
   res.redirect(longURL);
 });
 
@@ -122,6 +122,10 @@ app.get("/register", (req, res) => {
 
   const templateVars = { users, userID };
   res.render("register", templateVars);
+});
+
+app.get("*", (req, res) => {
+  res.redirect("/urls");
 });
 
 //post methods
@@ -190,10 +194,10 @@ app.post("/login", (req, res) => {
   if (userByEmail) {
     if (!bcrypt.compareSync(password, userByEmail.hashedPassword)) {
       res.statusCode = 403;
-      return res.send("Error: 403, invalid login information");
+      res.send("Error: 403, invalid login information");
+      return;
     }
     req.session.userID = userByEmail.ID;
-    // res.cookie('userID', users[id].ID);
     res.redirect('/urls');
     return;
   }
