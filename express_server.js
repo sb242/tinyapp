@@ -1,6 +1,7 @@
 const morgan = require("morgan");
 const express = require("express");
 const cookieParser = require('cookie-parser');
+const bcrypt = require("bcryptjs");
 
 const app = express();
 const PORT = 8080; // default port 8080
@@ -190,7 +191,7 @@ app.post("/login", (req, res) => {
 
   for(let id in users) {
     if(users[id].email === email) {
-      if(users[id].password !== password) {
+      if(!bcrypt.compareSync(password, users[id].hashedPassword)) {
         res.statusCode = 403;
         return res.send("Error: 403, invalid login information");
       }
@@ -212,6 +213,7 @@ app.post("/logout", (req, res) => {
 app.post("/register", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
+  const hashedPassword = bcrypt.hashSync(password, 10);
   const ID = generateRandomString();
 
   if(email === "" || password === "") {
@@ -228,7 +230,7 @@ app.post("/register", (req, res) => {
     }
   }
 
-  users[ID] = { ID, email, password };
+  users[ID] = { ID, email, hashedPassword };
   res.cookie('userID', ID);
   res.redirect("/urls");
 })
