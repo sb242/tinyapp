@@ -17,10 +17,10 @@
         <a class="nav-item nav-link" href="/urls">My URLs</a>
         <a class="nav-item nav-link" href="/urls/new">Create New URL</a>
         <a class="nav-item nav-link" href="/register">Register</a>
-        <% if(users[user]) { %>
+        <% if(users[userID]) { %>
           <form action="/logout" method="POST">
             <ul class="nav justify-content-end">
-              <a class="nav-item nav-link disabled font-weight-bold text-warning">Logged in as: <%= users[user].email %></a>
+              <a class="nav-item nav-link disabled font-weight-bold text-warning">Logged in as: <%= users[userID].email %></a>
               <button class="btn btn-primary" type="submit">Logout</button>
             </ul>
           </form>

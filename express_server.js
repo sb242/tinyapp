@@ -7,11 +7,16 @@ const PORT = 8080; // default port 8080
 
 app.set("view engine", "ejs"); //set view engine
 
-/*----<Middleware>----*/
+//Middleware
 app.use(morgan('dev'));
 app.use(cookieParser());
 app.use(express.urlencoded({ extended: true })); //middleware used for translating sent data into readable code, from a buffer(not human readable) to string
 
+//url and user object databases
+const urlDatabase = {};
+const users = {};
+
+//global function
 const generateRandomString = () => {
   const randomString = (Math.random() + 1).toString(36).substring(6);
   return randomString;
@@ -27,9 +32,7 @@ const urlsForUser = (id) => {
   return userURLS;
 }
 
-const urlDatabase = {};
-const users = {};
-
+//http get methods
 app.get("/", (req, res) => {
   if(req.cookies["userID"]) {
     res.redirect("/urls");
@@ -44,26 +47,31 @@ app.get("/urls", (req, res) => {
   
   if(!userID) {
     res.redirect("/login");
+    return;
   }
 
-  console.log("userURLS", userURLS);
-  const templateVars = { urls: userURLS, users: users, user: userID };
+  const templateVars = { userURLS, users, userID };
   res.render("urls_index", templateVars);
 });
 
 app.get("/urls/new", (req, res) => {
-  if(!req.cookies["userID"]) {
+  const userID = req.cookies["userID"];
+
+  if(!userID) {
     res.redirect("/login");
     return;
   }
-  const templateVars = { users: users, user: req.cookies["userID"] };
+
+  const templateVars = { users, userID };
   res.render("urls_new", templateVars);
 });
 
 app.get("/urls/:id", (req, res) => {
   const id = req.params.id;
+  const userID = req.cookies["userID"];
+  const longURL = urlDatabase[id].longURL;
   
-  if(!req.cookies["userID"]) {
+  if(!userID) {
     res.redirect("/login");
     return;
   }
@@ -73,47 +81,70 @@ app.get("/urls/:id", (req, res) => {
     return;
   }
 
-  if(urlDatabase[id].userID !== req.cookies["userID"]) {
+  if(urlDatabase[id].userID !== userID) {
     res.send("That URL does not belong to you");
     return;
   }
 
-  const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id].longURL, users: users, user: req.cookies["userID"] };
+  const templateVars = { id, longURL, users, userID };
   res.render("urls_show", templateVars);
 });
 
 app.get("/u/:id", (req, res) => {
-  const longURL = urlDatabase[req.params.id].longURL;
+  const id = req.params.id;
+  const longURL = urlDatabase[id].longURL;
 
   if(!longURL) {
     res.send("The tinyapp id you're lookin for does not exist");
     return;
   }
+
   res.redirect(longURL);
 })
 
 app.get("/login", (req, res) => {
   const userID = req.cookies["userID"]
+
   if(userID) {
     res.redirect("/urls");
     return;
   }
-  const templateVars = { urls: urlDatabase, users: users, user: userID };
+
+  const templateVars = { users, userID };
   res.render("login", templateVars);
 })
 
 app.get("/register", (req, res) => {
-  if(req.cookies["userID"]) {
+  const userID = req.cookies["userID"];
+  
+  if(userID) {
     res.redirect("/urls");
     return;
   }
-  const templateVars = { urls: urlDatabase, users: users, user: req.cookies["userID"] };
-  res.render("urls_register", templateVars);
+
+  const templateVars = { users, userID };
+  res.render("register", templateVars);
+});
+
+//http post methods
+app.post("/urls", (req, res) => {
+  const userID = req.cookies["userID"];
+  const longURL =req.body.longURL;
+  const randomString = generateRandomString();
+  
+  if(!userID) {
+    res.send("Error: You cannot POST to shorten URLS because you are not logged in.");
+    return;
+  }
+  
+  urlDatabase[randomString] = {longURL, userID};
+  res.redirect(`/urls/${randomString}`);
 });
 
 app.post("/urls/:id", (req, res) => {
   const id = req.params.id;
   const userID = req.cookies["userID"];
+  const newURLName = req.body.newURLName;
 
   if(!urlDatabase[id]) {
     res.send("That URL id does not exist");
@@ -128,7 +159,7 @@ app.post("/urls/:id", (req, res) => {
     return;
   }
 
-  urlDatabase[req.params.id].longURL = req.body.newURLName;
+  urlDatabase[id].longURL = newURLName;
   res.redirect("/urls");
 });
 
@@ -149,26 +180,14 @@ app.post("/urls/:id/delete", (req, res) => {
     return;
   }
 
-  delete urlDatabase[req.params.id];
+  delete urlDatabase[id];
   res.redirect("/urls");
-});
-
-app.post("/urls", (req, res) => {
-  if(!req.cookies["userID"]) {
-    res.send("Error: You cannot POST to shorten URLS because you are not logged in.");
-    return;
-  }
-  console.log(req.body); // Log the POST request body to the console
-  const randomString = generateRandomString();
-  urlDatabase[randomString] = {longURL: req.body.longURL, userID: req.cookies["userID"]};
-  console.log(urlDatabase);
-  res.redirect(`/urls/${randomString}`); // Respond with 'Ok' (we will replace this)
 });
 
 app.post("/login", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
-  
+
   for(let id in users) {
     if(users[id].email === email) {
       if(users[id].password !== password) {
@@ -180,6 +199,7 @@ app.post("/login", (req, res) => {
       return;
     }
   }
+
   res.statusCode = 403;
   res.send("Error: 403, invalid login information");
 })
@@ -192,23 +212,28 @@ app.post("/logout", (req, res) => {
 app.post("/register", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
+  const ID = generateRandomString();
+
   if(email === "" || password === "") {
     res.statusCode = 400;
-    return res.send("Error 400, email or password fields are empty");
+    res.send("Error 400, email or password fields are empty");
+    return;
   }
+
   for(let id in users) {
     if(users[id].email === email) {
       res.statusCode = 400;
-      return res.send("Error 400, email already exists in our database");
+      res.send("Error 400, email already exists in our database");
+      return;
     }
   }
-  const ID = generateRandomString();
+
   users[ID] = { ID, email, password };
   res.cookie('userID', ID);
-  console.log(users);
   res.redirect("/urls");
 })
 
+//server listener
 app.listen(PORT, () => {
-  console.log(`Example app listening on port ${PORT}!`);
+  console.log(`TinyApp app listening on port ${PORT}!`);
 });
